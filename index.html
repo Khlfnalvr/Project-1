@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Landing Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <header class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">Welcome to Our Interactive Space</h1>
+                <p class="hero-subtitle">Connect, share, and engage with our community</p>
+            </div>
+        </header>
+
+        <!-- Message Board Section -->
+        <section class="message-section">
+            <div class="message-container">
+                <h2>Community Message Board</h2>
+                <p class="section-description">Share your thoughts and see what others are saying</p>
+
+                <!-- Message Form -->
+                <div class="message-form">
+                    <input
+                        type="text"
+                        id="nameInput"
+                        placeholder="Your Name"
+                        maxlength="50"
+                    />
+                    <textarea
+                        id="messageInput"
+                        placeholder="Your Message"
+                        rows="4"
+                        maxlength="500"
+                    ></textarea>
+                    <button id="sendBtn" class="send-btn">
+                        <span class="btn-text">Send Message</span>
+                        <span class="btn-icon">✉️</span>
+                    </button>
+                </div>
+
+                <!-- Messages Display -->
+                <div class="messages-wrapper">
+                    <h3>Recent Messages</h3>
+                    <div id="messagesContainer" class="messages-container">
+                        <!-- Messages will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 Interactive Landing Page. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

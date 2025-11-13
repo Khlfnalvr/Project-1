@@ -67,6 +67,7 @@ def main():
     no_detection_timeout = random.randint(20, 100)  # Random timeout between 20-100 seconds
     last_detection_time = time.time()  # Track last time object was detected (or started)
     print(f"🎲 Random timeout set to {no_detection_timeout} seconds")
+    print(f"⏱️  Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
 
     while True:
         frame = picam.capture_array()
@@ -103,6 +104,7 @@ def main():
                 # Generate new random timeout
                 no_detection_timeout = random.randint(20, 100)
                 print(f"🎲 New random timeout set to {no_detection_timeout} seconds")
+                print(f"⏱️  Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
             except Exception as e:
                 print(f"❌ Failed to send message: {e}")
 
@@ -110,18 +112,23 @@ def main():
         if detected:
             last_detection_time = time.time()
 
-        # If no object detected for longer than random timeout AND delay period passed
-        if not detected and (time.time() - last_detection_time) >= no_detection_timeout and (time.time() - last_sent_time) >= delay:
-            try:
-                client.sendall(b"on")  # Send "on" message due to timeout
-                print(f"⏰ Sent 'on' via TCP (No detection timeout: {no_detection_timeout}s reached).")
-                last_sent_time = time.time()  # Update the last sent time
-                last_detection_time = time.time()  # Reset no-detection timer
-                # Generate new random timeout
-                no_detection_timeout = random.randint(20, 100)
-                print(f"🎲 New random timeout set to {no_detection_timeout} seconds")
-            except Exception as e:
-                print(f"❌ Failed to send message: {e}")
+        # If no object detected for longer than (delay + random timeout)
+        # Timeout only starts counting AFTER the 17 second delay period
+        total_timeout = delay + no_detection_timeout
+        if not detected and (time.time() - last_sent_time) >= total_timeout:
+            # Check if there was no detection since timeout started OR detection timeout reached
+            if last_detection_time <= last_sent_time or (time.time() - last_detection_time) >= no_detection_timeout:
+                try:
+                    client.sendall(b"on")  # Send "on" message due to timeout
+                    print(f"⏰ Sent 'on' via TCP (No detection for {no_detection_timeout}s after {delay}s delay).")
+                    last_sent_time = time.time()  # Update the last sent time
+                    last_detection_time = time.time()  # Reset no-detection timer
+                    # Generate new random timeout
+                    no_detection_timeout = random.randint(20, 100)
+                    print(f"🎲 New random timeout set to {no_detection_timeout} seconds")
+                    print(f"⏱️  Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
+                except Exception as e:
+                    print(f"❌ Failed to send message: {e}")
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

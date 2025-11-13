@@ -1,0 +1,30 @@
+[Unit]
+Description=YOLO Detection Service (with Tmux Terminal)
+After=network.target network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=forking
+User=pi
+WorkingDirectory=/home/pi/yolo5
+ExecStartPre=/bin/sleep 20
+ExecStart=/bin/bash /home/pi/yolo5/start_yolo_tmux.sh
+ExecStop=/usr/bin/tmux kill-session -t yolo
+Restart=on-failure
+RestartSec=10
+
+# Environment variables
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/pi/.Xauthority"
+
+# Resource limits
+MemoryLimit=1G
+CPUQuota=90%
+
+# Auto-shutdown after 3 hours of running
+RuntimeMaxSec=3h
+ExecStopPost=/usr/bin/systemctl poweroff
+
+[Install]
+WantedBy=multi-user.target

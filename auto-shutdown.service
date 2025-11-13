@@ -1,0 +1,11 @@
+[Unit]
+Description=Auto Shutdown after 3 hours uptime
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl poweroff
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

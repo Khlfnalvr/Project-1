@@ -1,0 +1,14 @@
+[Unit]
+Description=Auto Shutdown Timer - Shutdown after 3 hours uptime
+Requires=auto-shutdown.service
+
+[Timer]
+# Shutdown 3 hours (180 minutes) after boot
+OnBootSec=3h
+# Prevent accidental re-trigger
+AccuracySec=1min
+# Only run once per boot
+Persistent=false
+
+[Install]
+WantedBy=timers.target

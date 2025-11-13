@@ -60,8 +60,8 @@ def main():
 
     print("✅ Kamera HQ aktif. Tekan Q untuk keluar.")
 
-    last_sent_time = time.time()  # Initialize with current time for 17s delay from start
-    delay = 17  # Delay time in seconds between detection sends
+    last_sent_time = time.time()  # Initialize with current time for 25s delay from start
+    delay = 25  # Delay time in seconds between detection sends
 
     # Random timeout setup
     no_detection_timeout = random.randint(20, 100)  # Random timeout between 20-100 seconds

@@ -12,8 +12,8 @@ ExecStartPre=/bin/sleep 20
 ExecStart=/bin/bash /home/pi/yolo5/start_yolo.sh
 Restart=on-failure
 RestartSec=10
-StandardOutput=append:/home/pi/yolo_service.log
-StandardError=append:/home/pi/yolo_service.log
+StandardOutput=journal
+StandardError=journal
 
 # Environment variables (if needed)
 Environment="DISPLAY=:0"

@@ -88,11 +88,8 @@ systemctl is-enabled yolo-detection.service
 sudo systemctl status yolo-detection.service
 # Output harus: active (running)
 
-# Lihat log real-time
-tail -f /home/pi/yolo_service.log
-
-# Atau pakai journalctl
-sudo journalctl -u yolo-detection.service -f
+# Lihat output real-time
+sudo journalctl -u yolo-detection -f
 ```
 
 ## 🎮 Perintah Kontrol Service
@@ -125,11 +122,11 @@ sudo systemctl disable yolo-detection.service
 
 ### Lihat Logs dan Output Program
 
-**PENTING**: Ketika berjalan sebagai systemd service, program **TIDAK akan membuka terminal window**. Semua output akan masuk ke log file.
+**PENTING**: Ketika berjalan sebagai systemd service, program **TIDAK akan membuka terminal window**. Semua output akan masuk ke systemd journal (bukan file).
 
 ```bash
 # Log real-time (REKOMENDASI untuk monitoring)
-tail -f /home/pi/yolo_service.log
+sudo journalctl -u yolo-detection -f
 
 # Output yang akan terlihat:
 # ✅ Connected to ESP2 at 192.168.4.1
@@ -137,24 +134,24 @@ tail -f /home/pi/yolo_service.log
 # 🔍 Detected: person (0.89) | Inference: 234.5ms
 # ✅ Sent 'on' via TCP (Object detected).
 
-# Log dari systemd journal
-sudo journalctl -u yolo-detection.service -f
-
-# Log dari systemd (semua)
-sudo journalctl -u yolo-detection.service
-
 # Log 100 baris terakhir
-sudo journalctl -u yolo-detection.service -n 100
-
-# Follow log real-time
-sudo journalctl -u yolo-detection.service -f
-
-# Log dari file
-tail -f /home/pi/yolo_service.log
+sudo journalctl -u yolo-detection -n 100
 
 # Log hari ini saja
-sudo journalctl -u yolo-detection.service --since today
+sudo journalctl -u yolo-detection --since today
+
+# Log sejak boot terakhir
+sudo journalctl -u yolo-detection -b
+
+# Log dengan filter keyword
+sudo journalctl -u yolo-detection | grep "Detected"
 ```
+
+**Keuntungan systemd journal:**
+- ✅ Auto log rotation (tidak akan penuh disk)
+- ✅ Compressed storage
+- ✅ Query powerful dengan journalctl
+- ✅ Tidak perlu setup log rotation manual
 
 ## 🖥️ Manual Run vs Service Run
 
@@ -191,16 +188,19 @@ sudo systemctl start yolo-detection
 - ✅ Auto-start on boot
 - ✅ Auto-shutdown setelah 3 jam
 - ✅ Auto-restart jika crash
-- ❌ Output tidak tampil di terminal
-- ✅ Output masuk ke **LOG FILE**: `/home/pi/yolo_service.log`
+- ❌ Output tidak tampil di terminal SSH
+- ✅ Output masuk ke **systemd journal** (auto log rotation, tidak akan penuh disk)
 
 **Cara lihat output:**
 ```bash
-# Monitor log real-time
-tail -f /home/pi/yolo_service.log
-
-# Atau via journalctl
+# Monitor output real-time (seperti tail -f)
 sudo journalctl -u yolo-detection -f
+
+# Lihat semua log
+sudo journalctl -u yolo-detection
+
+# Log 50 baris terakhir
+sudo journalctl -u yolo-detection -n 50
 ```
 
 ## 🔍 Troubleshooting
@@ -362,8 +362,8 @@ sudo reboot
 # Setelah boot (tunggu ~30 detik), check status
 sudo systemctl status yolo-detection.service
 
-# Atau lihat log
-tail -f /home/pi/yolo_service.log
+# Atau lihat output real-time
+sudo journalctl -u yolo-detection -f
 ```
 
 ## 📊 Monitoring
@@ -403,24 +403,20 @@ systemctl status yolo-detection.service
 watch -n 10 'systemctl status yolo-detection.service | grep Active'
 ```
 
-### Log Rotation (Agar log tidak terlalu besar)
+### Log Management
 
-Create log rotation config:
+Output disimpan di systemd journal dengan **automatic rotation**, tidak perlu konfigurasi tambahan!
 
 ```bash
-sudo nano /etc/logrotate.d/yolo-detection
-```
+# Check disk usage journal
+sudo journalctl --disk-usage
 
-Isi dengan:
-```
-/home/pi/yolo_service.log {
-    daily
-    rotate 7
-    compress
-    missingok
-    notifempty
-    create 644 pi pi
-}
+# Set max journal size (optional, default sudah OK)
+sudo nano /etc/systemd/journald.conf
+# Uncomment dan set: SystemMaxUse=500M
+
+# Apply changes
+sudo systemctl restart systemd-journald
 ```
 
 ## ✅ Checklist Installation
@@ -448,7 +444,11 @@ sudo systemctl restart yolo-detection    # Restart
 sudo systemctl status yolo-detection     # Status
 sudo systemctl enable yolo-detection     # Enable auto-start
 sudo systemctl disable yolo-detection    # Disable auto-start
-tail -f /home/pi/yolo_service.log       # View log
+
+# View Output (systemd journal)
+sudo journalctl -u yolo-detection -f     # Real-time output (seperti tail -f)
+sudo journalctl -u yolo-detection -n 50  # 50 baris terakhir
+sudo journalctl -u yolo-detection --since today  # Log hari ini
 
 # Auto-Shutdown Commands
 systemctl status yolo-detection | grep Active  # Check runtime (hitung sisa waktu)
@@ -464,8 +464,8 @@ sudo reboot
 
 Jika ada masalah, check:
 1. Service status: `sudo systemctl status yolo-detection.service`
-2. Log file: `tail -f /home/pi/yolo_service.log`
-3. Journal log: `sudo journalctl -u yolo-detection.service -n 100`
+2. Output real-time: `sudo journalctl -u yolo-detection -f`
+3. Log history: `sudo journalctl -u yolo-detection -n 100`
 4. Test manual: `./start_yolo.sh`
 
 ---

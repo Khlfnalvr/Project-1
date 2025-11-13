@@ -22,11 +22,20 @@ scp start_yolo.sh pi@raspberrypi.local:/home/pi/yolo5/
 # Copy service file
 scp yolo-detection.service pi@raspberrypi.local:/tmp/
 
-# Copy Python script (pilih salah satu)
+# Copy Python script - PILIH SALAH SATU:
+
+# Option A: Headless (REKOMENDASI - no GUI, lebih ringan, untuk production)
 scp yolo_picamera_tcp_detection_headless.py pi@raspberrypi.local:/home/pi/yolo5/yolo.py
-# atau
+
+# Option B: Dengan GUI preview window (lebih berat, untuk development/debugging)
 scp yolo_picamera_tcp_detection.py pi@raspberrypi.local:/home/pi/yolo5/yolo.py
 ```
+
+**Perbedaan:**
+- **Headless**: Tidak ada window preview, output hanya ke log file, hemat CPU 20-30%
+- **GUI**: Ada window preview dengan bounding boxes, butuh display/X11
+
+**PENTING**: Script `start_yolo.sh` akan menjalankan file bernama `yolo.py`, jadi Anda harus rename/copy salah satu file di atas ke nama `yolo.py`.
 
 ### Step 2: Setup di Raspberry Pi
 
@@ -45,6 +54,8 @@ chmod +x start_yolo.sh
 
 # 2. Test manual dulu (PENTING!)
 ./start_yolo.sh
+# Saat test manual: Output akan tampil DI TERMINAL (bisa lihat status real-time)
+# Setelah install service: Output masuk ke LOG FILE (tidak ada terminal window)
 # Tekan Ctrl+C untuk stop setelah yakin jalan
 
 # 3. Copy service file ke systemd
@@ -112,10 +123,24 @@ sudo systemctl enable yolo-detection.service
 sudo systemctl disable yolo-detection.service
 ```
 
-### Lihat Logs
+### Lihat Logs dan Output Program
+
+**PENTING**: Ketika berjalan sebagai systemd service, program **TIDAK akan membuka terminal window**. Semua output akan masuk ke log file.
 
 ```bash
-# Log dari systemd
+# Log real-time (REKOMENDASI untuk monitoring)
+tail -f /home/pi/yolo_service.log
+
+# Output yang akan terlihat:
+# ✅ Connected to ESP2 at 192.168.4.1
+# 🎲 Random timeout set to 47 seconds
+# 🔍 Detected: person (0.89) | Inference: 234.5ms
+# ✅ Sent 'on' via TCP (Object detected).
+
+# Log dari systemd journal
+sudo journalctl -u yolo-detection.service -f
+
+# Log dari systemd (semua)
 sudo journalctl -u yolo-detection.service
 
 # Log 100 baris terakhir
@@ -129,6 +154,53 @@ tail -f /home/pi/yolo_service.log
 
 # Log hari ini saja
 sudo journalctl -u yolo-detection.service --since today
+```
+
+## 🖥️ Manual Run vs Service Run
+
+### Test Manual (./start_yolo.sh):
+```bash
+cd /home/pi/yolo5
+./start_yolo.sh
+```
+**Karakteristik:**
+- ✅ Output tampil langsung di **TERMINAL SSH Anda**
+- ✅ Bisa lihat status real-time
+- ✅ Bisa stop dengan Ctrl+C
+- ✅ Cocok untuk development/testing
+- ❌ Harus tetap SSH connected
+- ❌ Berhenti jika SSH disconnect
+
+**Output contoh di terminal:**
+```
+✅ Connected to ESP2 at 192.168.4.1
+✅ Kamera HQ aktif (headless mode).
+🎲 Random timeout set to 47 seconds
+⏱️  Total timeout (delay + random) = 64 seconds
+🔍 Detected: person (0.89) | Inference: 234.5ms
+✅ Sent 'on' via TCP (Object detected).
+```
+
+### Running sebagai Service (systemctl):
+```bash
+sudo systemctl start yolo-detection
+```
+**Karakteristik:**
+- ✅ Running di **BACKGROUND** (tidak ada terminal window)
+- ✅ Tetap jalan walau SSH disconnect
+- ✅ Auto-start on boot
+- ✅ Auto-shutdown setelah 3 jam
+- ✅ Auto-restart jika crash
+- ❌ Output tidak tampil di terminal
+- ✅ Output masuk ke **LOG FILE**: `/home/pi/yolo_service.log`
+
+**Cara lihat output:**
+```bash
+# Monitor log real-time
+tail -f /home/pi/yolo_service.log
+
+# Atau via journalctl
+sudo journalctl -u yolo-detection -f
 ```
 
 ## 🔍 Troubleshooting

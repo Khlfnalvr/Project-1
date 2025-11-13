@@ -79,7 +79,7 @@ def main():
     print("✅ Kamera HQ aktif (headless mode). Tekan Ctrl+C untuk keluar.")
     print("🚀 Running without GUI window - optimized for performance!")
 
-    last_sent_time = 0  # To track the time when the last message was sent
+    last_sent_time = time.time()  # Initialize with current time for 17s delay from start
     delay = 17  # Delay time in seconds between detection sends
 
     # Random timeout setup

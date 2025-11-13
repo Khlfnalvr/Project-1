@@ -4,11 +4,29 @@ echo "================================================"
 echo "🚀 YOLO Startup Script"
 echo "================================================"
 
-# Kill existing processes
+# Kill existing processes that might be using camera
 echo "🛑 Stopping existing processes..."
 sudo pkill -9 python3
 sudo pkill -9 libcamera
-sleep 2
+sudo pkill -9 libcamera-hello
+sudo pkill -9 libcamera-still
+sudo pkill -9 libcamera-vid
+sudo pkill -9 rpicam-hello
+sudo pkill -9 rpicam-still
+sudo pkill -9 rpicam-vid
+
+echo "⏳ Waiting for camera release..."
+sleep 3
+
+# Check for any remaining camera processes
+CAMERA_PROCS=$(ps aux | grep -E 'libcamera|picamera|rpicam' | grep -v grep | wc -l)
+if [ $CAMERA_PROCS -gt 0 ]; then
+    echo "⚠️  Found $CAMERA_PROCS camera process(es) still running, force killing..."
+    ps aux | grep -E 'libcamera|picamera|rpicam' | grep -v grep | awk '{print $2}' | xargs -r sudo kill -9
+    sleep 2
+fi
+
+echo "✅ Camera cleanup completed"
 
 # WiFi Configuration
 WIFI_SSID="ESP32_AP"

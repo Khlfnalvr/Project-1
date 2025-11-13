@@ -1,6 +1,6 @@
 # 🚀 Auto-Start Installation Guide untuk YOLO Detection
 
-Panduan ini akan membuat YOLO Detection script berjalan otomatis 20 detik setelah Raspberry Pi boot.
+Panduan ini akan membuat YOLO Detection script berjalan otomatis 20 detik setelah Raspberry Pi boot dan **automatic shutdown setelah 3 jam running**.
 
 ## 📋 Prerequisites
 
@@ -219,6 +219,66 @@ Restart=on-failure  # Restart otomatis jika crash
 RestartSec=10       # Tunggu 10 detik sebelum restart
 ```
 
+### Auto-Shutdown Setelah 3 Jam ⏰
+
+Service akan otomatis shutdown sistem setelah berjalan selama **3 jam**:
+
+```ini
+RuntimeMaxSec=3h              # Stop service setelah 3 jam
+ExecStopPost=/usr/bin/systemctl poweroff  # Shutdown sistem
+```
+
+**Timeline:**
+```
+T=0s      : Boot Raspberry Pi
+T=20s     : YOLO service start
+T=0-3h    : Program running (detection + TCP)
+T=3h      : Service stop → System shutdown
+```
+
+**Ubah durasi shutdown:**
+
+Edit `/etc/systemd/system/yolo-detection.service`:
+```bash
+sudo nano /etc/systemd/system/yolo-detection.service
+
+# Ubah RuntimeMaxSec (contoh nilai):
+RuntimeMaxSec=1h    # 1 jam
+RuntimeMaxSec=2h    # 2 jam
+RuntimeMaxSec=3h    # 3 jam (default)
+RuntimeMaxSec=4h    # 4 jam
+RuntimeMaxSec=180m  # 180 menit (sama dengan 3h)
+
+# Reload dan restart
+sudo systemctl daemon-reload
+sudo systemctl restart yolo-detection.service
+```
+
+**Disable auto-shutdown (running tanpa batas waktu):**
+
+```bash
+sudo nano /etc/systemd/system/yolo-detection.service
+
+# Comment atau hapus baris berikut:
+# RuntimeMaxSec=3h
+# ExecStopPost=/usr/bin/systemctl poweroff
+
+# Reload
+sudo systemctl daemon-reload
+sudo systemctl restart yolo-detection.service
+```
+
+**Check remaining time:**
+
+```bash
+# Lihat berapa lama service sudah running
+systemctl status yolo-detection.service | grep "Active:"
+
+# Output contoh:
+# Active: active (running) since Tue 2025-01-13 10:00:00 GMT; 1h 30min ago
+# Berarti masih 1 jam 30 menit lagi sebelum shutdown
+```
+
 ## 🧪 Test Auto-Start
 
 Untuk test apakah auto-start bekerja:
@@ -255,6 +315,20 @@ top -p $(pgrep -f yolo.py)
 # Atau pakai htop
 sudo apt install htop
 htop
+```
+
+### Monitor Runtime dan Countdown Shutdown
+
+```bash
+# Check berapa lama service sudah running
+systemctl status yolo-detection.service
+
+# Output contoh:
+# Active: active (running) since Tue 2025-01-13 10:00:00 GMT; 1h 30min ago
+# Sisa waktu: 3h - 1h 30min = 1h 30min lagi
+
+# Monitoring real-time
+watch -n 10 'systemctl status yolo-detection.service | grep Active'
 ```
 
 ### Log Rotation (Agar log tidak terlalu besar)
@@ -303,6 +377,12 @@ sudo systemctl status yolo-detection     # Status
 sudo systemctl enable yolo-detection     # Enable auto-start
 sudo systemctl disable yolo-detection    # Disable auto-start
 tail -f /home/pi/yolo_service.log       # View log
+
+# Auto-Shutdown Commands
+systemctl status yolo-detection | grep Active  # Check runtime (hitung sisa waktu)
+# Default: Auto-shutdown setelah 3 jam running
+# Disable: Edit /etc/systemd/system/yolo-detection.service
+#          Comment baris: RuntimeMaxSec=3h dan ExecStopPost=...
 
 # Reboot untuk test auto-start
 sudo reboot

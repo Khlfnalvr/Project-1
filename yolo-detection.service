@@ -23,5 +23,10 @@ Environment="XAUTHORITY=/home/pi/.Xauthority"
 MemoryLimit=1G
 CPUQuota=90%
 
+# Auto-shutdown after 3 hours of running
+RuntimeMaxSec=3h
+# Shutdown system when service stops after timeout
+ExecStopPost=/usr/bin/systemctl poweroff
+
 [Install]
 WantedBy=multi-user.target

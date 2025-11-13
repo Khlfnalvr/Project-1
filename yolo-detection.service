@@ -1,0 +1,27 @@
+[Unit]
+Description=YOLO Detection Service with Auto WiFi Connect
+After=network.target network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/yolo5
+ExecStartPre=/bin/sleep 20
+ExecStart=/bin/bash /home/pi/yolo5/start_yolo.sh
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/home/pi/yolo_service.log
+StandardError=append:/home/pi/yolo_service.log
+
+# Environment variables (if needed)
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/pi/.Xauthority"
+
+# Resource limits (optional, untuk prevent excessive resource usage)
+MemoryLimit=1G
+CPUQuota=90%
+
+[Install]
+WantedBy=multi-user.target

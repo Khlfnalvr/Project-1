@@ -88,6 +88,13 @@ def main():
     print(f"Random timeout set to {no_detection_timeout} seconds")
     print(f"Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
 
+    # Data statistics tracking
+    last_send_data_time = 0  # Initialize to 0 for immediate first send
+    send_data_delay = 25  # Send data statistics every 25 seconds
+    detected_count = 0  # Total birds detected in current period
+    confidence_sum = 0.0  # Sum of confidence values
+    confidence_count = 0  # Number of confidence values
+
     frame_count = 0
     start_time = time.time()
 
@@ -110,6 +117,10 @@ def main():
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], frame.shape).round()
                 for *xyxy, conf, cls in reversed(det):
                     detection_details.append(f"{names[int(cls)]} ({conf:.2f})")
+                    # Track statistics for data sending
+                    detected_count += 1
+                    confidence_sum += float(conf)
+                    confidence_count += 1
 
         # Log detection info (without drawing boxes)
         if detected:
@@ -151,6 +162,33 @@ def main():
                 print(f"Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
             except Exception as e:
                 print(f"Failed to send message: {e}")
+
+        # Send data statistics periodically
+        if (time.time() - last_send_data_time) >= send_data_delay:
+            try:
+                # Calculate average confidence
+                confidence_mean = (confidence_sum / confidence_count) if confidence_count > 0 else 0.0
+
+                data = {
+                    "DeviceId": 6,
+                    "TotalBirds": detected_count,
+                    "AvrConfidence": round(confidence_mean, 2)
+                }
+
+                # Convert dictionary to multi-line string
+                msg = "\n".join(f"{k}={v}" for k, v in data.items())
+                msg += "\n"  # Add newline at end for ESP32
+
+                client.sendall(msg.encode())
+                print(f"Sent data statistics via TCP: DeviceId=6, TotalBirds={detected_count}, AvrConfidence={round(confidence_mean, 2)}")
+
+                # Reset statistics for next period
+                last_send_data_time = time.time()
+                detected_count = 0
+                confidence_sum = 0.0
+                confidence_count = 0
+            except Exception as e:
+                print(f"Failed to send data statistics: {e}")
 
         # Small sleep to prevent excessive CPU usage
         time.sleep(0.01)

@@ -136,22 +136,20 @@ def main():
             last_detection_time = time.time()
 
         # If no object detected for longer than (delay + random timeout)
-        # Timeout only starts counting AFTER the 17 second delay period
+        # Simple logic: if timeout reached since last send, send "on"
         total_timeout = delay + no_detection_timeout
         if not detected and (time.time() - last_sent_time) >= total_timeout:
-            # Check if there was no detection since timeout started OR detection timeout reached
-            if last_detection_time <= last_sent_time or (time.time() - last_detection_time) >= no_detection_timeout:
-                try:
-                    client.sendall(b"on")  # Send "on" message due to timeout
-                    print(f"⏰ Sent 'on' via TCP (No detection for {no_detection_timeout}s after {delay}s delay).")
-                    last_sent_time = time.time()  # Update the last sent time
-                    last_detection_time = time.time()  # Reset no-detection timer
-                    # Generate new random timeout
-                    no_detection_timeout = random.randint(20, 100)
-                    print(f"🎲 New random timeout set to {no_detection_timeout} seconds")
-                    print(f"⏱️  Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
-                except Exception as e:
-                    print(f"❌ Failed to send message: {e}")
+            try:
+                client.sendall(b"on")  # Send "on" message due to timeout
+                print(f"⏰ Sent 'on' via TCP (No detection timeout: {total_timeout}s reached).")
+                last_sent_time = time.time()  # Update the last sent time
+                last_detection_time = time.time()  # Reset no-detection timer
+                # Generate new random timeout
+                no_detection_timeout = random.randint(20, 100)
+                print(f"🎲 New random timeout set to {no_detection_timeout} seconds")
+                print(f"⏱️  Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
+            except Exception as e:
+                print(f"❌ Failed to send message: {e}")
 
         # Small sleep to prevent excessive CPU usage
         time.sleep(0.01)

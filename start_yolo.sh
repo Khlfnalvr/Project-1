@@ -1,11 +1,11 @@
 #!/bin/bash
 
 echo "================================================"
-echo "🚀 YOLO Startup Script"
+echo "YOLO Startup Script"
 echo "================================================"
 
 # Kill existing processes that might be using camera
-echo "🛑 Stopping existing processes..."
+echo "Stopping existing processes..."
 sudo pkill -9 python3
 sudo pkill -9 libcamera
 sudo pkill -9 libcamera-hello
@@ -15,18 +15,18 @@ sudo pkill -9 rpicam-hello
 sudo pkill -9 rpicam-still
 sudo pkill -9 rpicam-vid
 
-echo "⏳ Waiting for camera release..."
+echo "Waiting for camera release..."
 sleep 3
 
 # Check for any remaining camera processes
 CAMERA_PROCS=$(ps aux | grep -E 'libcamera|picamera|rpicam' | grep -v grep | wc -l)
 if [ $CAMERA_PROCS -gt 0 ]; then
-    echo "⚠️  Found $CAMERA_PROCS camera process(es) still running, force killing..."
+    echo "Found $CAMERA_PROCS camera process(es) still running, force killing..."
     ps aux | grep -E 'libcamera|picamera|rpicam' | grep -v grep | awk '{print $2}' | xargs -r sudo kill -9
     sleep 2
 fi
 
-echo "✅ Camera cleanup completed"
+echo "Camera cleanup completed"
 
 # WiFi Configuration
 WIFI_SSID="ESP32_AP"
@@ -39,17 +39,17 @@ check_wifi() {
     # Check if connected to the correct WiFi
     CURRENT_SSID=$(iwgetid -r)
     if [ "$CURRENT_SSID" == "$WIFI_SSID" ]; then
-        echo "✅ Already connected to $WIFI_SSID"
+        echo "Already connected to $WIFI_SSID"
         return 0
     else
-        echo "❌ Not connected to $WIFI_SSID (current: $CURRENT_SSID)"
+        echo "Not connected to $WIFI_SSID (current: $CURRENT_SSID)"
         return 1
     fi
 }
 
 # Function to connect to WiFi
 connect_wifi() {
-    echo "📡 Connecting to WiFi: $WIFI_SSID"
+    echo "Connecting to WiFi: $WIFI_SSID"
 
     # Try using nmcli (NetworkManager) first
     if command -v nmcli &> /dev/null; then
@@ -92,72 +92,72 @@ connect_wifi() {
         fi
 
     else
-        echo "⚠️  Neither nmcli nor wpa_cli found. Please install network-manager."
+        echo "Neither nmcli nor wpa_cli found. Please install network-manager."
         return 1
     fi
 }
 
 # WiFi connection with retry
 echo ""
-echo "📡 Checking WiFi connection..."
+echo "Checking WiFi connection..."
 if ! check_wifi; then
     while [ $WIFI_RETRY_COUNT -lt $MAX_WIFI_RETRY ]; do
         WIFI_RETRY_COUNT=$((WIFI_RETRY_COUNT + 1))
-        echo "🔄 WiFi connection attempt $WIFI_RETRY_COUNT of $MAX_WIFI_RETRY"
+        echo "WiFi connection attempt $WIFI_RETRY_COUNT of $MAX_WIFI_RETRY"
 
         if connect_wifi; then
-            echo "✅ WiFi connected successfully!"
+            echo "WiFi connected successfully!"
             break
         else
             if [ $WIFI_RETRY_COUNT -lt $MAX_WIFI_RETRY ]; then
-                echo "⏳ Waiting 5 seconds before retry..."
+                echo "Waiting 5 seconds before retry..."
                 sleep 5
             else
-                echo "❌ Failed to connect to WiFi after $MAX_WIFI_RETRY attempts"
-                echo "⚠️  Continuing anyway (program may fail without network)..."
+                echo "Failed to connect to WiFi after $MAX_WIFI_RETRY attempts"
+                echo "Continuing anyway (program may fail without network)..."
             fi
         fi
     done
 else
-    echo "✅ WiFi already connected"
+    echo "WiFi already connected"
 fi
 
 # Wait for network to stabilize
-echo "⏳ Waiting for network to stabilize..."
+echo "Waiting for network to stabilize..."
 sleep 3
 
 # Test ESP2 connectivity
 ESP2_IP="192.168.4.1"
 echo ""
-echo "🔍 Testing connection to ESP2 at $ESP2_IP..."
+echo "Testing connection to ESP2 at $ESP2_IP..."
 if ping -c 2 -W 2 $ESP2_IP &> /dev/null; then
-    echo "✅ ESP2 is reachable"
+    echo "ESP2 is reachable"
 else
-    echo "⚠️  Warning: Cannot reach ESP2 at $ESP2_IP"
-    echo "   Program may fail to send TCP messages"
+    echo "Warning: Cannot reach ESP2 at $ESP2_IP"
+    echo "Program may fail to send TCP messages"
 fi
 
 # Navigate to project directory
 echo ""
-echo "📂 Navigating to project directory..."
+echo "Navigating to project directory..."
 cd /home/pi/yolo5 || {
-    echo "❌ Error: Directory /home/pi/yolo5 not found"
+    echo "Error: Directory /home/pi/yolo5 not found"
     exit 1
 }
 
 # Activate virtual environment
-echo "🐍 Activating virtual environment..."
+echo "Activating virtual environment..."
 if [ -d "venv" ]; then
     source venv/bin/activate
-    echo "✅ Virtual environment activated"
+    echo "Virtual environment activated"
 else
-    echo "⚠️  Warning: venv directory not found, continuing without venv..."
+    echo "Warning: venv directory not found, continuing without venv..."
 fi
 
 # Run the Python program with retry
 echo ""
 echo "================================================"
-echo "🎯 Starting YOLO Detection Program"
+echo "Starting YOLO Detection Program"
 echo "================================================"
 echo ""
 
@@ -166,8 +166,8 @@ MAX_RETRIES=10
 
 while true; do
     RETRY_COUNT=$((RETRY_COUNT + 1))
-    echo "🔄 Attempt #$RETRY_COUNT"
-    echo "⏰ Started at: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "Attempt #$RETRY_COUNT"
+    echo "Started at: $(date '+%Y-%m-%d %H:%M:%S')"
 
     # Run the program
     python yolo.py
@@ -175,23 +175,23 @@ while true; do
 
     # Check exit code
     if [ $EXIT_CODE -eq 0 ]; then
-        echo "✅ Program exited normally (exit code: 0)"
-        echo "🏁 Script finished at: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "Program exited normally (exit code: 0)"
+        echo "Script finished at: $(date '+%Y-%m-%d %H:%M:%S')"
         break
     else
-        echo "❌ Program failed with exit code: $EXIT_CODE"
+        echo "Program failed with exit code: $EXIT_CODE"
 
         if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
-            echo "🛑 Maximum retries ($MAX_RETRIES) reached. Stopping."
+            echo "Maximum retries ($MAX_RETRIES) reached. Stopping."
             exit 1
         fi
 
-        echo "⏳ Waiting 5 seconds before retry..."
+        echo "Waiting 5 seconds before retry..."
         sleep 5
 
         # Re-check WiFi connection before retry
         if ! check_wifi; then
-            echo "📡 WiFi disconnected, attempting to reconnect..."
+            echo "WiFi disconnected, attempting to reconnect..."
             connect_wifi
         fi
     fi
@@ -199,5 +199,5 @@ done
 
 echo ""
 echo "================================================"
-echo "✅ Script execution completed"
+echo "Script execution completed"
 echo "================================================"

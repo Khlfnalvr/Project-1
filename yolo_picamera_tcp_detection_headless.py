@@ -33,7 +33,7 @@ client = None
 
 def signal_handler(sig, frame):
     """Handle Ctrl+C gracefully"""
-    print("\n🛑 Stopping... Cleaning up resources.")
+    print("\nStopping... Cleaning up resources.")
     if picam:
         picam.close()
     if client:
@@ -71,13 +71,13 @@ def main():
     try:
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect((ESP2_IP, PORT))
-        print("✅ Connected to ESP2 at", ESP2_IP)
+        print("Connected to ESP2 at", ESP2_IP)
     except Exception as e:
-        print("❌ Connection failed:", e)
+        print("Connection failed:", e)
         exit()
 
-    print("✅ Kamera HQ aktif (headless mode). Tekan Ctrl+C untuk keluar.")
-    print("🚀 Running without GUI window - optimized for performance!")
+    print("Kamera HQ aktif (headless mode). Tekan Ctrl+C untuk keluar.")
+    print("Running without GUI window - optimized for performance!")
 
     last_sent_time = time.time()  # Initialize with current time for 25s delay from start
     delay = 25  # Delay time in seconds between detection sends
@@ -85,8 +85,8 @@ def main():
     # Random timeout setup
     no_detection_timeout = random.randint(20, 100)  # Random timeout between 20-100 seconds
     last_detection_time = time.time()  # Track last time object was detected (or started)
-    print(f"🎲 Random timeout set to {no_detection_timeout} seconds")
-    print(f"⏱️  Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
+    print(f"Random timeout set to {no_detection_timeout} seconds")
+    print(f"Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
 
     frame_count = 0
     start_time = time.time()
@@ -115,21 +115,21 @@ def main():
         if detected:
             frame_count += 1
             if frame_count % 30 == 0:  # Log every 30 frames with detection
-                print(f"🔍 Detected: {', '.join(detection_details)} | Inference: {(t2-t1)*1000:.1f}ms")
+                print(f"Detected: {', '.join(detection_details)} | Inference: {(t2-t1)*1000:.1f}ms")
 
-        # If object detected and enough time has passed (17 seconds delay)
+        # If object detected and enough time has passed (25 seconds delay)
         if detected and (time.time() - last_sent_time) >= delay:
             try:
                 client.sendall(b"on")  # Send "on" message
-                print(f"✅ Sent 'on' via TCP (Object detected: {', '.join(detection_details)}).")
+                print(f"Sent 'on' via TCP (Object detected: {', '.join(detection_details)}).")
                 last_sent_time = time.time()  # Update the last sent time
                 last_detection_time = time.time()  # Reset no-detection timer
                 # Generate new random timeout
                 no_detection_timeout = random.randint(20, 100)
-                print(f"🎲 New random timeout set to {no_detection_timeout} seconds")
-                print(f"⏱️  Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
+                print(f"New random timeout set to {no_detection_timeout} seconds")
+                print(f"Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
             except Exception as e:
-                print(f"❌ Failed to send message: {e}")
+                print(f"Failed to send message: {e}")
 
         # If object detected, update last detection time (even if not sending due to delay)
         if detected:
@@ -141,15 +141,15 @@ def main():
         if not detected and (time.time() - last_sent_time) >= total_timeout:
             try:
                 client.sendall(b"on")  # Send "on" message due to timeout
-                print(f"⏰ Sent 'on' via TCP (No detection timeout: {total_timeout}s reached).")
+                print(f"Sent 'on' via TCP (No detection timeout: {total_timeout}s reached).")
                 last_sent_time = time.time()  # Update the last sent time
                 last_detection_time = time.time()  # Reset no-detection timer
                 # Generate new random timeout
                 no_detection_timeout = random.randint(20, 100)
-                print(f"🎲 New random timeout set to {no_detection_timeout} seconds")
-                print(f"⏱️  Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
+                print(f"New random timeout set to {no_detection_timeout} seconds")
+                print(f"Total timeout (delay + random) = {delay + no_detection_timeout} seconds")
             except Exception as e:
-                print(f"❌ Failed to send message: {e}")
+                print(f"Failed to send message: {e}")
 
         # Small sleep to prevent excessive CPU usage
         time.sleep(0.01)

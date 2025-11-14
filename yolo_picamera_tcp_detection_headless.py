@@ -79,7 +79,7 @@ def main():
     print("Kamera HQ aktif (headless mode). Tekan Ctrl+C untuk keluar.")
     print("Running without GUI window - optimized for performance!")
 
-    last_sent_time = time.time()  # Initialize with current time for 25s delay from start
+    last_sent_time = 0  # Initialize to 0 so first detection can send immediately
     delay = 25  # Delay time in seconds between detection sends
 
     # Random timeout setup

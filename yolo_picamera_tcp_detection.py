@@ -112,13 +112,14 @@ def main():
         if detected:
             last_detection_time = time.time()
 
-        # If no object detected for longer than (delay + random timeout)
-        # Simple logic: if timeout reached since last send, send "on"
-        total_timeout = delay + no_detection_timeout
-        if not detected and (time.time() - last_sent_time) >= total_timeout:
+        # Timeout logic: send if no detection for random timeout duration
+        # AND respecting minimum delay from last send
+        if not detected and \
+           (time.time() - last_sent_time) >= delay and \
+           (time.time() - last_detection_time) >= no_detection_timeout:
             try:
                 client.sendall(b"on")  # Send "on" message due to timeout
-                print(f"Sent 'on' via TCP (No detection timeout: {total_timeout}s reached).")
+                print(f"Sent 'on' via TCP (No detection for {no_detection_timeout}s, delay {delay}s respected).")
                 last_sent_time = time.time()  # Update the last sent time
                 last_detection_time = time.time()  # Reset no-detection timer
                 # Generate new random timeout

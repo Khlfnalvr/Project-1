@@ -120,7 +120,7 @@ def main():
         # If object detected and enough time has passed (25 seconds delay)
         if detected and (time.time() - last_sent_time) >= delay:
             try:
-                client.sendall(b"on")  # Send "on" message
+                client.sendall(b"on\n")  # Send "on" message with newline for ESP32
                 print(f"Sent 'on' via TCP (Object detected: {', '.join(detection_details)}).")
                 last_sent_time = time.time()  # Update the last sent time
                 last_detection_time = time.time()  # Reset no-detection timer
@@ -141,7 +141,7 @@ def main():
            (time.time() - last_sent_time) >= delay and \
            (time.time() - last_detection_time) >= no_detection_timeout:
             try:
-                client.sendall(b"on")  # Send "on" message due to timeout
+                client.sendall(b"on\n")  # Send "on" message due to timeout with newline for ESP32
                 print(f"Sent 'on' via TCP (No detection for {no_detection_timeout}s, delay {delay}s respected).")
                 last_sent_time = time.time()  # Update the last sent time
                 last_detection_time = time.time()  # Reset no-detection timer

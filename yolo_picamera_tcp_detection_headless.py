@@ -90,7 +90,7 @@ def main():
 
     # Data statistics tracking
     last_send_data_time = 0  # Initialize to 0 for immediate first send
-    send_data_delay = 25  # Send data statistics every 25 seconds
+    send_data_delay = 0.2  # Send data statistics every 0.2 seconds
     detected_count = 0  # Total birds detected in current period
     confidence_sum = 0.0  # Sum of confidence values
     confidence_count = 0  # Number of confidence values

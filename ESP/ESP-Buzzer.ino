@@ -93,7 +93,7 @@ void loop() {
 
         // === Relay lokal saja, tidak dibroadcast ===
         // jalan ketika ada burung saja tiap 10 detik
-        if (message.equalsIgnoreCase("on") || message.indexOf("on") != -1) {
+        if (message.equalsIgnoreCase("on")) {
           digitalWrite(relayPinSpeaker, HIGH);  // Speaker ON
           digitalWrite(relayPinMotor, HIGH);    // Motor ON
           Serial.println("Relay ON (10s)");

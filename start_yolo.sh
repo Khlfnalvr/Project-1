@@ -29,10 +29,66 @@ fi
 echo "Camera cleanup completed"
 
 # WiFi Configuration
-WIFI_SSID="ESP32_AP"
-WIFI_PASSWORD="12345678"
+# Priority 1: DATAWIFI (if available)
+PRIORITY_WIFI_SSID="DATAWIFI"
+PRIORITY_WIFI_PASSWORD="123456"
+
+# Priority 2: ESP32_AP (fallback)
+FALLBACK_WIFI_SSID="ESP32_AP"
+FALLBACK_WIFI_PASSWORD="12345678"
+
+# Active WiFi variables
+WIFI_SSID=""
+WIFI_PASSWORD=""
 MAX_WIFI_RETRY=5
 WIFI_RETRY_COUNT=0
+
+# Function to check if a WiFi network is available
+check_wifi_available() {
+    local SSID="$1"
+    echo "Scanning for WiFi: $SSID..."
+
+    if command -v nmcli &> /dev/null; then
+        # Using nmcli to scan
+        sudo nmcli device wifi rescan &> /dev/null
+        sleep 2
+        if nmcli device wifi list | grep -q "^.*$SSID"; then
+            echo "WiFi '$SSID' is available"
+            return 0
+        else
+            echo "WiFi '$SSID' not found"
+            return 1
+        fi
+    elif command -v iwlist &> /dev/null; then
+        # Using iwlist to scan
+        if sudo iwlist wlan0 scan | grep -q "ESSID:\"$SSID\""; then
+            echo "WiFi '$SSID' is available"
+            return 0
+        else
+            echo "WiFi '$SSID' not found"
+            return 1
+        fi
+    else
+        echo "No WiFi scanning tool available"
+        return 1
+    fi
+}
+
+# Function to select WiFi priority
+select_wifi() {
+    echo "Selecting WiFi network..."
+
+    # Check if priority WiFi is available
+    if check_wifi_available "$PRIORITY_WIFI_SSID"; then
+        WIFI_SSID="$PRIORITY_WIFI_SSID"
+        WIFI_PASSWORD="$PRIORITY_WIFI_PASSWORD"
+        echo "Selected: $WIFI_SSID (Priority WiFi)"
+    else
+        WIFI_SSID="$FALLBACK_WIFI_SSID"
+        WIFI_PASSWORD="$FALLBACK_WIFI_PASSWORD"
+        echo "Selected: $WIFI_SSID (Fallback WiFi)"
+    fi
+}
 
 # Function to check WiFi connection
 check_wifi() {
@@ -96,6 +152,13 @@ connect_wifi() {
         return 1
     fi
 }
+
+# Select WiFi based on availability
+echo ""
+echo "================================================"
+echo "WiFi Selection Process"
+echo "================================================"
+select_wifi
 
 # WiFi connection with retry
 echo ""
